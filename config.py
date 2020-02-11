@@ -1,3 +1,4 @@
+import datetime
 from utils import dice_coef
 
 def get_config():
@@ -30,7 +31,8 @@ def get_config():
                 "monitor": 'val_loss'
             },
             "tensorboard": {
-                "log_dir": 'logs'
+                "log_dir": "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
+                "histogram_freq": 1
             }
 
         }
