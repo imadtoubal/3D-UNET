@@ -17,7 +17,8 @@ def get_config():
         "data": {
             "train_path": 'data/train/',
             "val_path": 'data/val/',
-            "test_path": 'data/test/'
+            "test_path": 'data/test/',
+            "out_path": 'data/out/'
         },
         # For checkpoint saving, early stopping...
         "train": {
@@ -27,12 +28,12 @@ def get_config():
                 "save_best_only": True
             },
             "early_stopping": {
-                "patience": 10, 
+                "patience": 100, 
                 "monitor": 'val_loss'
             },
             "tensorboard": {
                 "log_dir": "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
-                "histogram_freq": 1
+                "profile_batch": 0
             }
 
         }

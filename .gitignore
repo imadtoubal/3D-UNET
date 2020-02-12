@@ -139,3 +139,5 @@ ckpt/*
 data/*
 
 *.h5
+
+.vscode

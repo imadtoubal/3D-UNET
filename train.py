@@ -1,11 +1,16 @@
 from utils import *
 import numpy as np
+from numpy.random import seed
+from tensorflow import set_random_seed
 import tensorflow as tf
 import datetime
 
 # Custom imports
 from unet import unet
 from config import get_config
+
+seed(0)
+set_random_seed(0)
 
 # %% Import configs
 cfg = get_config()

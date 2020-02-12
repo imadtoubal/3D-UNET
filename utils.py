@@ -2,6 +2,9 @@ import scipy.io as sio
 import os
 import numpy as np
 from tqdm import tqdm
+import scipy.io as sio
+from keras import backend as K
+
 
 def readmat(filename, var_name):
     img = sio.loadmat(filename)
@@ -41,7 +44,6 @@ def load_dataset(root_dir, var_name='data'):
 
 # Source: https://gist.github.com/wassname/7793e2058c5c9dacb5212c0ac0b18a8a
 
-from keras import backend as K
 
 def dice_coef(y_true, y_pred, smooth=1):
     """
@@ -54,3 +56,14 @@ def dice_coef(y_true, y_pred, smooth=1):
 
 def dice_coef_loss(y_true, y_pred):
     return 1-dice_coef(y_true, y_pred)
+
+
+def export_outs(X, Y, out, out_path):
+    for i in range(out.shape[0]):
+        img = X[i, :, :, :, 0]
+        seg = np.argmax(out[i], axis=3)
+        grt = np.argmax(Y[i], axis=3)
+
+        output = np.stack((img, seg, grt), axis=3)
+
+        sio.savemat('{}out{}.mat'.format(out_path, i), {'data': output})
