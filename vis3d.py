@@ -10,11 +10,11 @@ import numpy as np
 
 from skimage import feature
 
-import tkinter as tk
-from tkinter import filedialog
+# import tkinter as tk
+# from tkinter import filedialog
 
-root = tk.Tk()
-root.withdraw()
+# root = tk.Tk()
+# root.withdraw()
 
 # file_path = filedialog.askopenfilename()
 file_path = 'data/out/out0.mat'
