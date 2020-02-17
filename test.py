@@ -17,15 +17,34 @@ cfg = get_config()
 
 
 # %%
-X,  Y  = load_dataset(cfg['data']['test_path'])
+X,  Y, paths  = load_dataset(cfg['data']['test_path'], return_paths=True)
 
 # %%
 model = unet(128, 128, 64, 1)
 
-model.load_weights('ckpt/model20200211-181051.p5')
+modelname = 'model20200214-164746.p5'
+model.load_weights('ckpt/' + modelname)
 
 
 # %%
-out = model.predict(X)
-
+out = model.predict(X, batch_size=1)
 export_outs(X, Y, out, cfg['data']['out_path'])
+
+tabledata = []
+
+for i in range(out.shape[0]):
+    row = [paths[i]]
+    for j in range(1, 6):
+        yt = Y[i:,:,:,j]
+        yp = out[i,:,:,:,j]
+        dice = dice_coef(yt, yp, numpy=True) * 100
+        row.append('%.2f' % dice)
+    tabledata.append(row)
+
+import pandas as pd 
+
+df = pd.DataFrame(tabledata)
+
+print(df)
+
+df.to_csv('results/{}'.format('model20200214-164746.p5'))

@@ -22,7 +22,7 @@ def ind2onehot(indimg):
     Y = np.stack([indimg == i for i in range(classes)], axis=4)
     return Y
 
-def load_dataset(root_dir, var_name='data'):
+def load_dataset(root_dir, var_name='data', return_paths=False):
     """
     Args:
         root_dir (string): Directory with all the images.
@@ -39,31 +39,42 @@ def load_dataset(root_dir, var_name='data'):
     Y = ind2onehot(Y)
     X = np.pad(X, pad_width=((0,0), (14,14), (0,0), (0, 0), (0, 0)), mode='edge')
     Y = np.pad(Y, pad_width=((0,0), (14,14), (0,0), (0, 0), (0, 0)))
-    
-    return X, Y
+    if return_paths:
+        return X, Y, [path.split('/')[-1] for path in paths]
+    else:
+        return X, Y 
 
 # Source: https://gist.github.com/wassname/7793e2058c5c9dacb5212c0ac0b18a8a
 
 
-def dice_coef(y_true, y_pred, smooth=1):
+def dice_coef(y_true, y_pred, smooth=1, numpy=False):
     """
     Dice = (2*|X & Y|)/ (|X|+ |Y|)
          =  2*sum(|A*B|)/(sum(A^2)+sum(B^2))
     ref: https://arxiv.org/pdf/1606.04797v1.pdf
     """
-    intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
-    return (2. * intersection + smooth) / (K.sum(K.square(y_true),-1) + K.sum(K.square(y_pred),-1) + smooth)
+    if numpy:
+        intersection = np.sum(np.abs(y_true * y_pred))
+        return (2. * intersection + smooth) / (np.sum(np.square(y_true)) + np.sum(np.square(y_pred)) + smooth)
+    else:
+        intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
+        return (2. * intersection + smooth) / (K.sum(K.square(y_true),-1) + K.sum(K.square(y_pred),-1) + smooth)
 
 def dice_coef_loss(y_true, y_pred):
     return 1-dice_coef(y_true, y_pred)
 
 
-def export_outs(X, Y, out, out_path):
+def export_outs(X, Y, out, out_path, paths=None):
     for i in range(out.shape[0]):
         img = X[i, :, :, :, 0]
         seg = np.argmax(out[i], axis=3)
         grt = np.argmax(Y[i], axis=3)
 
         output = np.stack((img, seg, grt), axis=3)
+        if paths == None:
+            sio.savemat('{}out{}.mat'.format(out_path, i), {'data': output})
+        else:
+            sio.savemat('{}{}'.format(out_path, paths[i]), {'data': output})
 
-        sio.savemat('{}out{}.mat'.format(out_path, i), {'data': output})
+if __name__ == '__main__':
+    print('Utils work perfectly')

@@ -10,20 +10,20 @@ import numpy as np
 
 from skimage import feature
 
-# import tkinter as tk
-# from tkinter import filedialog
+import tkinter as tk
+from tkinter import filedialog
 
-# root = tk.Tk()
-# root.withdraw()
+root = tk.Tk()
+root.withdraw()
 
-# file_path = filedialog.askopenfilename()
-file_path = 'data/out/out0.mat'
+file_path = filedialog.askopenfilename()
+# file_path = 'data/out/out0.mat'
 
 
 fig = plt.figure()
-ax1 = fig.add_subplot(1, 3, 1)
-ax2 = fig.add_subplot(1, 3, 2)
-ax3 = fig.add_subplot(1, 3, 3)
+ax1 = fig.add_subplot(1, 2, 1)
+ax2 = fig.add_subplot(1, 2, 2)
+# ax3 = fig.add_subplot(1, 3, 3)
 
 plt.subplots_adjust(left=0.1, bottom=0.35)
 
@@ -54,23 +54,49 @@ axSlider = plt.axes([0.1, 0.2, 0.8, 0.05])
 slider = Slider(axSlider, 'Slide', valmin=1, valmax=z, valstep=1, valinit=n)
 
 gt = img[:,:,:,2]
-seg = canny3d(img[:,:,:,1])
+seg = img[:,:,:,1]
 im = img[:,:,:,0]
 
-ax1.set_title('3D MRI Image')
-ax2.set_title('Segmentation result')
-ax3.set_title('Ground Truth')
+def im2rgb(image):
+    image = image.astype('float32')
+    image = (image - image.min()) / (image.max() - image.min())
+    image = (image * 255).astype('uint8')
+    return np.stack((image, ) * 3, axis=-1)
 
-p1 = ax1.imshow(im[:,:,n])
-p2 = ax2.imshow(seg[:,:,n])
-p3 = ax3.imshow(gt[:,:,n])
+def applymask(image, seg, intensity=100):
+    n = seg.max().astype('int')
+    mask = np.zeros_like(image).astype('uint8')
+    colors = np.array([
+            [0, 1, 0, 0, 1, 0, 1, 1],
+            [0, 0, 1, 0, 1, 1, 0, 1],
+            [0, 0, 0, 1, 0, 1, 1, 1]
+        ])
+    for i in range(n):
+        color = list(colors[:,i])
+        m = (seg == i).astype('uint8')
+        mask += (np.stack((m * color[0], m * color[1], m * color[2]), axis=-1)) * intensity
+
+    return image + mask
+
+    
+
+imgrgb = im2rgb(im)
+imgseg = applymask(imgrgb, seg)
+imsgt = applymask(imgrgb, gt)
+
+# ax1.set_title('3D MRI Image')
+ax1.set_title('Segmentation result')
+ax2.set_title('Ground Truth')
+
+p1 = ax1.imshow(imgseg[:,:,n,:])
+p2 = ax2.imshow(imsgt[:,:,n,:])
+# p3 = ax3.imshow(gt[:,:,n])
  
  
 def frame_update(val):
     n = np.floor(slider.val).astype('int') - 1
-    p1.set_data(im[:,:,n])
-    p2.set_data(seg[:,:,n])
-    p3.set_data(gt[:,:,n])
+    p1.set_data(imgseg[:,:,n,:])
+    p2.set_data(imsgt[:,:,n,:])
 
 slider.on_changed(frame_update)
 plt.show()
