@@ -20,6 +20,9 @@ cfg = get_config()
 X,  Y, paths  = load_dataset(cfg['data']['test_path'], return_paths=True)
 
 # %%
+nets {
+    
+}
 model = unet(128, 128, 64, 1)
 
 modelname = 'model20200214-164746.p5'

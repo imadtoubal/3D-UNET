@@ -641,9 +641,197 @@ def dense_unet(iw, ih, ide, ic):
 
   # print(outputs.shape)
   model = tf.keras.Model(inputs=[inputs], outputs=[outputs])
+  # model.compile(**cfg['net_cmp'])
+  return model
+
+def smooth_filter_init():
+  return np.ones([3, 3, 3])
+
+def deep_dense_unet(iw, ih, ide, ic):
+  inputs = tf.keras.layers.Input((iw, ih, ide, ic))
+
+  c1_1 = tf.keras.layers.Conv3D(16, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(inputs)
+  c1_1 = tf.keras.layers.Dropout(0.2)(c1_1)
+  c1_1 = tf.keras.layers.concatenate([inputs, c1_1])
+  c1_2 = tf.keras.layers.Conv3D(16, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c1_1)
+  c1_2 = tf.keras.layers.concatenate([c1_1, c1_2])
+  p1 = tf.keras.layers.MaxPooling3D((2, 2, 2))(c1_2)
+
+  # P1  
+
+  c2_1 = tf.keras.layers.Conv3D(32, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p1)
+  c2_1 = tf.keras.layers.Dropout(0.2)(c2_1)
+  c2_1 = tf.keras.layers.concatenate([p1, c2_1])
+  c2_2 = tf.keras.layers.Conv3D(32, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c2_1)
+  c2_2 = tf.keras.layers.concatenate([c2_1, c2_2])
+  p2 = tf.keras.layers.MaxPooling3D((2, 2, 2))(c2_2)
+
+  # P2  
+
+  c3_1 = tf.keras.layers.Conv3D(64, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p2)
+  c3_1 = tf.keras.layers.Dropout(0.2)(c3_1)
+  c3_1 = tf.keras.layers.concatenate([p2, c3_1])
+  c3_2 = tf.keras.layers.Conv3D(64, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c3_1)
+  c3_2 = tf.keras.layers.concatenate([c3_1, c3_2])
+  p3 = tf.keras.layers.MaxPooling3D((2, 2, 2))(c3_2)
+
+  # P3
+
+  c4_1 = tf.keras.layers.Conv3D(128, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p3)
+  c4_1 = tf.keras.layers.Dropout(0.2)(c4_1)
+  c4_1 = tf.keras.layers.concatenate([p3, c4_1])
+  c4_2 = tf.keras.layers.Conv3D(128, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c4_1)
+  c4_2 = tf.keras.layers.concatenate([c4_1, c4_2])
+  p4 = tf.keras.layers.MaxPooling3D((2, 2, 2))(c4_2)
+
+  # P4
+
+  c5_1 = tf.keras.layers.Conv3D(256, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p4)
+  c5_1 = tf.keras.layers.Dropout(0.2)(c5_1)
+  c5_1 = tf.keras.layers.concatenate([p4, c5_1])
+  c5_2 = tf.keras.layers.Conv3D(256, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c5_1)
+  c5_2 = tf.keras.layers.concatenate([c5_1, c5_2])
+
+  # C5
+
+  u6 = tf.keras.layers.Conv3DTranspose(128, (2, 2, 2), strides=(2, 2, 2), padding='same')(c5_2)
+  u6 = tf.keras.layers.concatenate([u6, c4_2])
+  c6_1 = tf.keras.layers.Conv3D(128, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u6)
+  c6_1 = tf.keras.layers.Dropout(0.2)(c6_1)
+  c6_1 = tf.keras.layers.concatenate([u6, c6_1])
+  c6_2 = tf.keras.layers.Conv3D(128, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c6_1)
+  c6_2 = tf.keras.layers.concatenate([c6_1, c6_2])
+
+  # C6
+
+  u7 = tf.keras.layers.Conv3DTranspose(64, (2, 2, 2), strides=(2, 2, 2), padding='same')(c6_2)
+  u7 = tf.keras.layers.concatenate([u7, c3_2])
+  c7_1 = tf.keras.layers.Conv3D(64, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u7)
+  c7_1 = tf.keras.layers.Dropout(0.2)(c7_1)
+  c7_1 = tf.keras.layers.concatenate([u7, c7_1])
+  c7_2 = tf.keras.layers.Conv3D(64, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c7_1)
+  c7_2 = tf.keras.layers.concatenate([c7_1, c7_2])
+
+  # C7
+
+  u8 = tf.keras.layers.Conv3DTranspose(32, (2, 2, 2), strides=(2, 2, 2), padding='same')(c7_2)
+  u8 = tf.keras.layers.concatenate([u8, c2_2])
+  c8_1 = tf.keras.layers.Conv3D(32, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u8)
+  c8_1 = tf.keras.layers.Dropout(0.2)(c8_1)
+  c8_1 = tf.keras.layers.concatenate([u8, c8_1])
+  c8_2 = tf.keras.layers.Conv3D(32, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c8_1)
+  c8_2 = tf.keras.layers.concatenate([c8_1, c8_2])
+
+  # C8
+
+  u9 = tf.keras.layers.Conv3DTranspose(16, (2, 2, 2), strides=(2, 2, 2), padding='same')(c8_2)
+  u9 = tf.keras.layers.concatenate([u9, c1_2])
+  c9_1 = tf.keras.layers.Conv3D(16, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u9)
+  c9_1 = tf.keras.layers.Dropout(0.2)(c9_1)
+  c9_1 = tf.keras.layers.concatenate([u9, c9_1])
+  c9_2 = tf.keras.layers.Conv3D(16, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c9_1)
+  c9_2 = tf.keras.layers.concatenate([c9_1, c9_2])
+
+  # C9
+
+  outputs = tf.keras.layers.Conv3D(6, (1, 1, 1), activation='softmax')(c9_2)
+
+  nextinp = tf.keras.layers.Conv3D(6, (3, 3, 3), trainable=False, padding='same')(outputs)
+  nextinp = tf.keras.layers.concatenate([nextinp, inputs])
+
+  c1_1 = tf.keras.layers.Conv3D(16, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(nextinp)
+  c1_1 = tf.keras.layers.Dropout(0.2)(c1_1)
+  c1_1 = tf.keras.layers.concatenate([inputs, c1_1])
+  c1_2 = tf.keras.layers.Conv3D(16, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c1_1)
+  c1_2 = tf.keras.layers.concatenate([c1_1, c1_2])
+  p1 = tf.keras.layers.MaxPooling3D((2, 2, 2))(c1_2)
+
+  # P1  
+
+  c2_1 = tf.keras.layers.Conv3D(32, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p1)
+  c2_1 = tf.keras.layers.Dropout(0.2)(c2_1)
+  c2_1 = tf.keras.layers.concatenate([p1, c2_1])
+  c2_2 = tf.keras.layers.Conv3D(32, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c2_1)
+  c2_2 = tf.keras.layers.concatenate([c2_1, c2_2])
+  p2 = tf.keras.layers.MaxPooling3D((2, 2, 2))(c2_2)
+
+  # P2  
+
+  c3_1 = tf.keras.layers.Conv3D(64, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p2)
+  c3_1 = tf.keras.layers.Dropout(0.2)(c3_1)
+  c3_1 = tf.keras.layers.concatenate([p2, c3_1])
+  c3_2 = tf.keras.layers.Conv3D(64, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c3_1)
+  c3_2 = tf.keras.layers.concatenate([c3_1, c3_2])
+  p3 = tf.keras.layers.MaxPooling3D((2, 2, 2))(c3_2)
+
+  # P3
+
+  c4_1 = tf.keras.layers.Conv3D(128, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p3)
+  c4_1 = tf.keras.layers.Dropout(0.2)(c4_1)
+  c4_1 = tf.keras.layers.concatenate([p3, c4_1])
+  c4_2 = tf.keras.layers.Conv3D(128, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c4_1)
+  c4_2 = tf.keras.layers.concatenate([c4_1, c4_2])
+  p4 = tf.keras.layers.MaxPooling3D((2, 2, 2))(c4_2)
+
+  # P4
+
+  c5_1 = tf.keras.layers.Conv3D(256, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p4)
+  c5_1 = tf.keras.layers.Dropout(0.2)(c5_1)
+  c5_1 = tf.keras.layers.concatenate([p4, c5_1])
+  c5_2 = tf.keras.layers.Conv3D(256, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c5_1)
+  c5_2 = tf.keras.layers.concatenate([c5_1, c5_2])
+
+  # C5
+
+  u6 = tf.keras.layers.Conv3DTranspose(128, (2, 2, 2), strides=(2, 2, 2), padding='same')(c5_2)
+  u6 = tf.keras.layers.concatenate([u6, c4_2])
+  c6_1 = tf.keras.layers.Conv3D(128, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u6)
+  c6_1 = tf.keras.layers.Dropout(0.2)(c6_1)
+  c6_1 = tf.keras.layers.concatenate([u6, c6_1])
+  c6_2 = tf.keras.layers.Conv3D(128, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c6_1)
+  c6_2 = tf.keras.layers.concatenate([c6_1, c6_2])
+
+  # C6
+
+  u7 = tf.keras.layers.Conv3DTranspose(64, (2, 2, 2), strides=(2, 2, 2), padding='same')(c6_2)
+  u7 = tf.keras.layers.concatenate([u7, c3_2])
+  c7_1 = tf.keras.layers.Conv3D(64, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u7)
+  c7_1 = tf.keras.layers.Dropout(0.2)(c7_1)
+  c7_1 = tf.keras.layers.concatenate([u7, c7_1])
+  c7_2 = tf.keras.layers.Conv3D(64, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c7_1)
+  c7_2 = tf.keras.layers.concatenate([c7_1, c7_2])
+
+  # C7
+
+  u8 = tf.keras.layers.Conv3DTranspose(32, (2, 2, 2), strides=(2, 2, 2), padding='same')(c7_2)
+  u8 = tf.keras.layers.concatenate([u8, c2_2])
+  c8_1 = tf.keras.layers.Conv3D(32, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u8)
+  c8_1 = tf.keras.layers.Dropout(0.2)(c8_1)
+  c8_1 = tf.keras.layers.concatenate([u8, c8_1])
+  c8_2 = tf.keras.layers.Conv3D(32, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c8_1)
+  c8_2 = tf.keras.layers.concatenate([c8_1, c8_2])
+
+  # C8
+
+  u9 = tf.keras.layers.Conv3DTranspose(16, (2, 2, 2), strides=(2, 2, 2), padding='same')(c8_2)
+  u9 = tf.keras.layers.concatenate([u9, c1_2])
+  c9_1 = tf.keras.layers.Conv3D(16, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u9)
+  c9_1 = tf.keras.layers.Dropout(0.2)(c9_1)
+  c9_1 = tf.keras.layers.concatenate([u9, c9_1])
+  c9_2 = tf.keras.layers.Conv3D(16, (3, 3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c9_1)
+  c9_2 = tf.keras.layers.concatenate([c9_1, c9_2])
+
+  # C9
+
+  outputs = tf.keras.layers.Conv3D(6, (1, 1, 1), activation='softmax')(c9_2)
+
+  # print(outputs.shape)
+  model = tf.keras.Model(inputs=[inputs], outputs=[outputs])
   model.compile(**cfg['net_cmp'])
   return model
 
+
+
 if __name__ == '__main__':
-  model = dunet(128, 128, 64, 1, 2)
+  model = deep_dense_unet(128, 128, 64, 1)
   print(model.summary())

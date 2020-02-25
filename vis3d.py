@@ -13,11 +13,13 @@ from skimage import feature
 import tkinter as tk
 from tkinter import filedialog
 
+from utils import dice_coef
+
 root = tk.Tk()
 root.withdraw()
 
 file_path = filedialog.askopenfilename()
-# file_path = 'data/out/out0.mat'
+file_path = 'data/out/out0.mat'
 
 
 fig = plt.figure()
@@ -67,6 +69,7 @@ def applymask(image, seg, intensity=100):
     n = seg.max().astype('int')
     mask = np.zeros_like(image).astype('uint8')
     colors = np.array([
+           # k, r, g, b, y, c, m, w
             [0, 1, 0, 0, 1, 0, 1, 1],
             [0, 0, 1, 0, 1, 1, 0, 1],
             [0, 0, 0, 1, 0, 1, 1, 1]
@@ -78,7 +81,24 @@ def applymask(image, seg, intensity=100):
 
     return image + mask
 
-    
+# Draw dice table ============================================================
+
+row = []
+for j in range(6):
+    yt = (gt == j).astype('int')
+    yp = (seg == j).astype('int')
+    dice = dice_coef(yt, yp, numpy=True) * 100
+    row.append(dice)
+
+axLegend = plt.axes([0.1, 0.15, 0.8, 0.05])
+axLegend.axis('off')
+axLegend.table([
+    ['Background', 'Liver', 'Kidney', 'Stomach', 'Duodenum', 'Largebowel', 'Mean'],
+    ['{0:.2f}'.format(v) for v in row]+['{0:.2f}'.format(np.sum(row)/len(row))]],
+    colLoc='center',
+    colColours=['w', 'r', 'g', 'b', 'y', 'c', 'w'])
+
+#=============================================================================
 
 imgrgb = im2rgb(im)
 imgseg = applymask(imgrgb, seg)

@@ -141,3 +141,8 @@ data/*
 *.h5
 
 .vscode
+
+old
+logs*
+results
+*.old

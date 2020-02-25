@@ -22,7 +22,7 @@ def ind2onehot(indimg):
     Y = np.stack([indimg == i for i in range(classes)], axis=4)
     return Y
 
-def load_dataset(root_dir, var_name='data', return_paths=False):
+def load_dataset(root_dir, var_name='data', return_paths=False, return_idx=False):
     """
     Args:
         root_dir (string): Directory with all the images.
@@ -36,9 +36,14 @@ def load_dataset(root_dir, var_name='data', return_paths=False):
     print('Processing...')
     X, Y = data[:,:,:,:,0], data[:,:,:,:,1]
     X = np.expand_dims(X, -1)
-    Y = ind2onehot(Y)
     X = np.pad(X, pad_width=((0,0), (14,14), (0,0), (0, 0), (0, 0)), mode='edge')
-    Y = np.pad(Y, pad_width=((0,0), (14,14), (0,0), (0, 0), (0, 0)))
+    if return_idx == False:
+        print('YAS')
+        Y = ind2onehot(Y)
+        Y = np.pad(Y, pad_width=((0,0), (14,14), (0,0), (0, 0), (0, 0)))
+    else:
+        print('NAS')
+        Y = np.pad(Y, pad_width=((0,0), (14,14), (0,0), (0, 0)))
     if return_paths:
         return X, Y, [path.split('/')[-1] for path in paths]
     else:
@@ -62,7 +67,6 @@ def dice_coef(y_true, y_pred, smooth=1, numpy=False):
 
 def dice_coef_loss(y_true, y_pred):
     return 1-dice_coef(y_true, y_pred)
-
 
 def export_outs(X, Y, out, out_path, paths=None):
     for i in range(out.shape[0]):

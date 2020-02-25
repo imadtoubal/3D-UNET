@@ -6,7 +6,7 @@ import tensorflow as tf
 import datetime
 
 # Custom imports
-from unet import unet
+from nets import unet, unetpp, attunet
 from config import get_config
 
 seed(0)
@@ -21,6 +21,11 @@ X,  Y  = load_dataset(cfg['data']['train_path'])
 Xv, Yv = load_dataset(cfg['data']['train_path'])
 
 # %%
+nets = {
+    'unet': unet,
+    'unetpp': unetpp,
+    'attunet': attunet
+}
 model = unet(128, 128, 64, 1)
 
 # %%
