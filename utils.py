@@ -4,6 +4,7 @@ import numpy as np
 from tqdm import tqdm
 import scipy.io as sio
 from keras import backend as K
+from pathlib import Path
 
 
 def readmat(filename, var_name):
@@ -22,7 +23,7 @@ def ind2onehot(indimg):
     Y = np.stack([indimg == i for i in range(classes)], axis=4)
     return Y
 
-def load_dataset(root_dir, var_name='data', return_paths=False, return_idx=False):
+def load_dataset(root_dir, var_name='data', return_paths=False, return_idx=False, pad=14):
     """
     Args:
         root_dir (string): Directory with all the images.
@@ -31,19 +32,15 @@ def load_dataset(root_dir, var_name='data', return_paths=False, return_idx=False
     paths = [img_path for img_path in os.listdir(root_dir) if img_path[-4:] == '.mat']
     # read all .mat files
     data = [readmat(root_dir + img_path, var_name) for i, img_path in tqdm(enumerate(paths), total=len(paths))]
-    print('Stacking...')
     data = np.stack(data)
-    print('Processing...')
     X, Y = data[:,:,:,:,0], data[:,:,:,:,1]
     X = np.expand_dims(X, -1)
-    X = np.pad(X, pad_width=((0,0), (14,14), (0,0), (0, 0), (0, 0)), mode='edge')
-    if return_idx == False:
-        print('YAS')
+    X = np.pad(X, pad_width=((0,0), (pad,pad), (0,0), (0, 0), (0, 0)))
+    if not return_idx:
         Y = ind2onehot(Y)
-        Y = np.pad(Y, pad_width=((0,0), (14,14), (0,0), (0, 0), (0, 0)))
+        Y = np.pad(Y, pad_width=((0,0), (pad,pad), (0,0), (0, 0), (0, 0)))
     else:
-        print('NAS')
-        Y = np.pad(Y, pad_width=((0,0), (14,14), (0,0), (0, 0)))
+        Y = np.pad(Y, pad_width=((0,0), (pad,pad), (0,0), (0, 0)))
     if return_paths:
         return X, Y, [path.split('/')[-1] for path in paths]
     else:
@@ -54,7 +51,7 @@ def load_dataset(root_dir, var_name='data', return_paths=False, return_idx=False
 
 def dice_coef(y_true, y_pred, smooth=1, numpy=False):
     """
-    Dice = (2*|X & Y|)/ (|X|+ |Y|)
+    Dice = (2*|X & Y|)/ (|X| + |Y|)
          =  2*sum(|A*B|)/(sum(A^2)+sum(B^2))
     ref: https://arxiv.org/pdf/1606.04797v1.pdf
     """
@@ -69,16 +66,25 @@ def dice_coef_loss(y_true, y_pred):
     return 1-dice_coef(y_true, y_pred)
 
 def export_outs(X, Y, out, out_path, paths=None):
+    # saving probs
+    print('Exporting...')
+    Path(out_path).mkdir(parents=True, exist_ok=True)
     for i in range(out.shape[0]):
         img = X[i, :, :, :, 0]
-        seg = np.argmax(out[i], axis=3)
+        prob = out[i]
+        seg = np.argmax(prob, axis=3)
         grt = np.argmax(Y[i], axis=3)
 
         output = np.stack((img, seg, grt), axis=3)
         if paths == None:
             sio.savemat('{}out{}.mat'.format(out_path, i), {'data': output})
+            sio.savemat('{}prob_out{}.mat'.format(prob, i), {'data': prob})
         else:
             sio.savemat('{}{}'.format(out_path, paths[i]), {'data': output})
+            sio.savemat('{}prob_{}'.format(out_path, paths[i]), {'data': prob})
+
+
+# def probs_to_mask(probs):
 
 if __name__ == '__main__':
     print('Utils work perfectly')

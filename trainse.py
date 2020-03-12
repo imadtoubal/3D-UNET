@@ -22,11 +22,10 @@ Xv, Yv = load_dataset(cfg['data']['val_path'])
 
 # %%
 nets = {
-    # 'unet': unet,
-    # 'scseunet': scSEunet,
-    # 'unetpp': unetpp,
-    'scseunetpp': scSEunetpp,
-    # 'attunet': attunet
+    # 'nose': (False, False),
+    # 'sse': (False, True),
+    # 'cse': (True, False),
+    'scse': (True, True),
 }
 
 
@@ -35,9 +34,9 @@ nets = {
 for net in nets:
 
     print("TRAINING: {} ====================================================".format(net))
-
-    model = nets[net](128, 128, 64, 1)
-    model_name = '/model_{}_{}.p5'.format(
+    cSE, sSE = nets[net]
+    model = unet(128, 128, 64, 1, r=3, cSE=cSE, sSE=sSE)
+    model_name = '/se_model_{}_{}.p5'.format(
         net,
         datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
     checkpointer = tf.keras.callbacks.ModelCheckpoint(cfg['train']['ckpt']['ckpt_path'] + model_name, **cfg['train']['ckpt'])

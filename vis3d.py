@@ -19,8 +19,8 @@ root = tk.Tk()
 root.withdraw()
 
 file_path = filedialog.askopenfilename()
-file_path = 'data/out/out0.mat'
-
+# file_path = 'data/out/out0.mat'
+root.destroy()
 
 fig = plt.figure()
 ax1 = fig.add_subplot(1, 2, 1)

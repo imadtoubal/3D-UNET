@@ -146,3 +146,6 @@ old
 logs*
 results
 *.old
+data*
+ckpt
+png_data

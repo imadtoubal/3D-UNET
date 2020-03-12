@@ -21,8 +21,6 @@ def get_config():
         },
         "net_cmp": {
             "optimizer": Adam(learning_rate=3e-4), 
-            # "loss": 'categorical_crossentropy', 
-            # "class_weight": class_weights,
             "metrics": [dice_coef]
         },
         # Data paths
@@ -30,7 +28,12 @@ def get_config():
             "train_path": 'data/train/',
             "val_path": 'data/val/',
             "test_path": 'data/test/',
-            "out_path": 'data/out/'
+            "out_path": 'data/out/',
+            "256_train_path": 'data_256_200_64/train_train/',
+            "256_val_path": 'data_256_200_64/train_val/',
+            "256_test_path": 'data_256_200_64/test/',
+            "256_out_path": 'data_256_200_64/out/',
+            
         },
         # For checkpoint saving, early stopping...
         "train": {
@@ -40,12 +43,8 @@ def get_config():
                 "save_best_only": True
             },
             "early_stopping": {
-                "patience": 100, 
+                "patience": 50, 
                 "monitor": 'val_loss'
-            },
-            "tensorboard": {
-                "log_dir": "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
-                "profile_batch": 0
             }
 
         }
