@@ -23,7 +23,7 @@ def ind2onehot(indimg):
     Y = np.stack([indimg == i for i in range(classes)], axis=4)
     return Y
 
-def load_dataset(root_dir, var_name='data', return_paths=False, return_idx=False, pad=14):
+def load_dataset(root_dir, var_name='data', return_paths=False, return_idx=False, pad=14, addcoords=False):
     """
     Args:
         root_dir (string): Directory with all the images.
@@ -34,6 +34,7 @@ def load_dataset(root_dir, var_name='data', return_paths=False, return_idx=False
     data = [readmat(root_dir + img_path, var_name) for i, img_path in tqdm(enumerate(paths), total=len(paths))]
     data = np.stack(data)
     X, Y = data[:,:,:,:,0], data[:,:,:,:,1]
+    
     X = np.expand_dims(X, -1)
     X = np.pad(X, pad_width=((0,0), (pad,pad), (0,0), (0, 0), (0, 0)))
     if not return_idx:
@@ -41,13 +42,43 @@ def load_dataset(root_dir, var_name='data', return_paths=False, return_idx=False
         Y = np.pad(Y, pad_width=((0,0), (pad,pad), (0,0), (0, 0), (0, 0)))
     else:
         Y = np.pad(Y, pad_width=((0,0), (pad,pad), (0,0), (0, 0)))
+
+    if addcoords: X = add_coords(X, Y)
+
     if return_paths:
         return X, Y, [path.split('/')[-1] for path in paths]
     else:
         return X, Y 
 
 # Source: https://gist.github.com/wassname/7793e2058c5c9dacb5212c0ac0b18a8a
+def add_coords(X_all, Y_all):
+    coords = []
+    for i in range(X_all.shape[0]):
+        X = X_all[i]
+        Y = Y_all[i]
+        kidneyidx = 2
+        liveridx = 1
 
+        top = np.argwhere(Y == liveridx).min(axis=0)[2]
+        left = np.argwhere(Y != 0).min(axis=0)[1]
+        back = np.argwhere(Y != 0).min(axis=0)[0]
+
+        center = np.argwhere(Y == kidneyidx).mean(axis=0)
+        o = np.round(center).astype('int')
+
+        x = (np.arange(X.shape[0]) - center[0]) / (center[0] - back) 
+        y = (np.arange(X.shape[1]) - center[1]) / (center[1] - left)
+        z = (np.arange(X.shape[2]) - center[2]) / (center[2] - top)
+
+        xx = np.ones((128, 128, 64)) * x.reshape(128, 1, 1)
+        yy = np.ones((128, 128, 64)) * y.reshape(1, 128, 1)
+        zz = np.ones((128, 128, 64)) * z.reshape(1, 1, 64)
+
+
+
+        coords.append(np.stack([X[:,:,:,0], xx, yy, zz], axis=3))
+        print(coords[-1].shape)
+    return np.stack(coords)
 
 def dice_coef(y_true, y_pred, smooth=1, numpy=False):
     """
