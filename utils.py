@@ -78,7 +78,7 @@ def export_outs(X, Y, out, out_path, paths=None):
         output = np.stack((img, seg, grt), axis=3)
         if paths == None:
             sio.savemat('{}out{}.mat'.format(out_path, i), {'data': output})
-            sio.savemat('{}prob_out{}.mat'.format(prob, i), {'data': prob})
+            sio.savemat('{}prob_out{}.mat'.format(out_path, i), {'data': prob})
         else:
             sio.savemat('{}{}'.format(out_path, paths[i]), {'data': output})
             sio.savemat('{}prob_{}'.format(out_path, paths[i]), {'data': prob})

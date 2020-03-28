@@ -143,29 +143,32 @@ def unet(w, h, d, c, r=1, scSE=False, sSE=False, cSE=False, loss='categorical_cr
         
         # P4
 
-        c5 = conv_block(p4, [256, 256], 'c5_' + str(i)) # removed the Squeeze Excite
+        c5 = conv_block(p4, [256, 256], 'c5_' + str(i), scSE=scSE) # removed the Squeeze Excite
         
         # C5
 
-        u6 = Conv3DTranspose(128, (2, 2, 2), strides=(2,2,2), padding='same')(c5)
+        #u6 = Conv3DTranspose(128, (2, 2, 2), strides=(2,2,2), padding='same')(c5)
+        u6 = UpSampling3D()(c5)
         u6 = concatenate([u6, c4])
         c6 = conv_block(u6, [128, 128], 'c6_' + str(i), scSE=scSE, sSE=sSE, cSE=cSE)
 
         # C6
 
-        u7 = Conv3DTranspose(64, (2, 2, 2), strides=(2,2,2), padding='same')(c6)
+        #u7 = Conv3DTranspose(64, (2, 2, 2), strides=(2,2,2), padding='same')(c6)
+        u7 = UpSampling3D()(c6)
         u7 = concatenate([u7, c3])
         c7 = conv_block(u7, [64, 64], 'c7_' + str(i), scSE=scSE, sSE=sSE, cSE=cSE)
 
         # C6
 
-        u8 = Conv3DTranspose(32, (2, 2, 2), strides=(2,2,2), padding='same')(c7)
+        #u8 = Conv3DTranspose(32, (2, 2, 2), strides=(2,2,2), padding='same')(c7)
+        u8 = UpSampling3D()(c7)
         u8 = concatenate([u8, c2])
         c8 = conv_block(u8, [32, 32], 'c8_' + str(i), scSE=scSE, sSE=sSE, cSE=cSE)
 
         # C6
-
-        u9 = Conv3DTranspose(16, (2, 2, 2), strides=(2,2,2), padding='same')(c8)
+        #u9 = Conv3DTranspose(16, (2, 2, 2), strides=(2,2,2), padding='same')(c8)
+        u9 = UpSampling3D()(c8)
         u9 = concatenate([u9, c1])
         c9 = conv_block(u9, [16, 16], 'c9_' + str(i), scSE=scSE, sSE=sSE, cSE=cSE)
 
@@ -216,28 +219,28 @@ def unet_bi(w, h, d, c, r=1, scSE=False, sSE=False, cSE=False, loss='categorical
         # C5
 
         u6 = UpSampling3D(size=2)(c5)
-        u6 = Conv3D(128, (3,3,3), padding='same')(u6)
+        # u6 = Conv3D(128, (3,3,3), padding='same')(u6)
         u6 = concatenate([u6, c4])
         c6 = conv_block(u6, [128, 128], 'c6_' + str(i), scSE=scSE, sSE=sSE, cSE=cSE)
 
         # C6
 
         u7 = UpSampling3D(size=2)(c6)
-        u7 = Conv3D(64, (3,3,3), padding='same')(u7)
+        # u7 = Conv3D(64, (3,3,3), padding='same')(u7)
         u7 = concatenate([u7, c3])
         c7 = conv_block(u7, [64, 64], 'c7_' + str(i), scSE=scSE, sSE=sSE, cSE=cSE)
 
         # C6
 
         u8 = UpSampling3D(size=2)(c7)
-        u8 = Conv3D(32, (3,3,3), padding='same')(u8)
+        # u8 = Conv3D(32, (3,3,3), padding='same')(u8)
         u8 = concatenate([u8, c2])
         c8 = conv_block(u8, [32, 32], 'c8_' + str(i), scSE=scSE, sSE=sSE, cSE=cSE)
 
         # C6
 
         u9 = UpSampling3D(size=2)(c8)
-        u9 = Conv3D(16, (3,3,3), padding='same')(u9)
+        # u9 = Conv3D(16, (3,3,3), padding='same')(u9)
         u9 = concatenate([u9, c1])
         c9 = conv_block(u9, [16, 16], 'c9_' + str(i), scSE=scSE, sSE=sSE, cSE=cSE)
 
@@ -326,7 +329,7 @@ def unet_2d(w, h, d, c, r=1, scSE=False, sSE=False, cSE=False, loss='categorical
 
     return model
 
-def scSEunet(w, h, d, c, r=1):
+def scSEunet(w, h, d, c, r=1, loss='categorical_crossentropy'):
     return unet(w, h, d, c, r=r, scSE=True)
 
 def cSEunet(w, h, d, c, r=1):
@@ -536,7 +539,7 @@ def unetpp_2d(w, h, d, c, loss='categorical_crossentropy', scSE=False):
     return model
 
 
-def scSEunetpp(w, h, d, c):
-    return unetpp(w, h, d, c, scSE=True)
+def scSEunetpp(w, h, d, c, loss='categorical_crossentropy'):
+    return unetpp(w, h, d, c, scSE=True, loss=loss)
 if __name__ == '__main__':
     pass
