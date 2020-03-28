@@ -5,6 +5,7 @@ from tqdm import tqdm
 import scipy.io as sio
 from keras import backend as K
 from pathlib import Path
+from skimage import measure
 
 
 def readmat(filename, var_name):
@@ -29,7 +30,7 @@ def load_dataset(root_dir, var_name='data', return_paths=False, return_idx=False
         root_dir (string): Directory with all the images.
     """
     # get all .mat files 
-    paths = [img_path for img_path in os.listdir(root_dir) if img_path[-4:] == '.mat']
+    paths = [img_path for img_path in sorted(os.listdir(root_dir)) if img_path[-4:] == '.mat']
     # read all .mat files
     data = [readmat(root_dir + img_path, var_name) for i, img_path in tqdm(enumerate(paths), total=len(paths))]
     data = np.stack(data)
@@ -63,7 +64,7 @@ def add_coords(X_all, Y_all):
         left = np.argwhere(Y != 0).min(axis=0)[1]
         back = np.argwhere(Y != 0).min(axis=0)[0]
 
-        center = np.argwhere(Y == kidneyidx).mean(axis=0)
+        center = get_center(Y)
         o = np.round(center).astype('int')
 
         x = (np.arange(X.shape[0]) - center[0]) / (center[0] - back) 
@@ -77,8 +78,21 @@ def add_coords(X_all, Y_all):
 
 
         coords.append(np.stack([X[:,:,:,0], xx, yy, zz], axis=3))
-        print(coords[-1].shape)
     return np.stack(coords)
+
+def get_center(y):
+    mask = y == 2
+    mask = measure.label(mask)
+        
+    if mask.max() != 1:
+        c1 = np.argwhere(mask == 1).mean(axis=0)
+        c2 = np.argwhere(mask == 2).mean(axis=0)
+        c = (c1 + c2) / 2
+    else:
+        c = np.argwhere(mask == 1).mean(axis=0)    
+        c[1] = 64.14460244803878
+
+    return c
 
 def dice_coef(y_true, y_pred, smooth=1, numpy=False):
     """
