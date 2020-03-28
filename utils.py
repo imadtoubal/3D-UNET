@@ -38,13 +38,12 @@ def load_dataset(root_dir, var_name='data', return_paths=False, return_idx=False
     
     X = np.expand_dims(X, -1)
     X = np.pad(X, pad_width=((0,0), (pad,pad), (0,0), (0, 0), (0, 0)))
-    if not return_idx:
-        Y = ind2onehot(Y)
-        Y = np.pad(Y, pad_width=((0,0), (pad,pad), (0,0), (0, 0), (0, 0)))
-    else:
-        Y = np.pad(Y, pad_width=((0,0), (pad,pad), (0,0), (0, 0)))
+    Y = np.pad(Y, pad_width=((0,0), (pad,pad), (0,0), (0, 0)))
 
     if addcoords: X = add_coords(X, Y)
+    
+    if not return_idx:
+        Y = ind2onehot(Y)
 
     if return_paths:
         return X, Y, [path.split('/')[-1] for path in paths]
