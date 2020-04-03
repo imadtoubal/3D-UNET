@@ -17,7 +17,7 @@ cfg = get_config()
 
 
 # %%
-X,  Y, paths  = load_dataset(cfg['data']['test_path'], return_paths=True)
+X,  Y, paths  = load_dataset(cfg['data']['test_path'], return_paths=True, addcoords=True)
 
 # %%
 nets = {
@@ -33,9 +33,9 @@ nets = {
 }
 
 for net in nets:
-    model = nets[net](128, 128, 64, 1)
+    model = nets[net](128, 128, 64, 4)
 
-    modelname = f'model_{net}_fl.p5'
+    modelname = f'model_{net}_coord.p5'
     model.load_weights('ckpt/' + modelname)
 
     # %%

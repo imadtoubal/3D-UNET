@@ -24,7 +24,7 @@ def ind2onehot(indimg):
     Y = np.stack([indimg == i for i in range(classes)], axis=4)
     return Y
 
-def load_dataset(root_dir, var_name='data', return_paths=False, return_idx=False, pad=14, addcoords=False):
+def load_dataset(root_dir, var_name='data', return_paths=False, return_idx=False, pad=14, addcoords=False, coords_only=False):
     """
     Args:
         root_dir (string): Directory with all the images.
@@ -38,13 +38,12 @@ def load_dataset(root_dir, var_name='data', return_paths=False, return_idx=False
     
     X = np.expand_dims(X, -1)
     X = np.pad(X, pad_width=((0,0), (pad,pad), (0,0), (0, 0), (0, 0)))
+    Y = np.pad(Y, pad_width=((0,0), (pad,pad), (0,0), (0, 0)))
+
+    if addcoords: X = add_coords(X, Y, coords_only=coords_only)
+    
     if not return_idx:
         Y = ind2onehot(Y)
-        Y = np.pad(Y, pad_width=((0,0), (pad,pad), (0,0), (0, 0), (0, 0)))
-    else:
-        Y = np.pad(Y, pad_width=((0,0), (pad,pad), (0,0), (0, 0)))
-
-    if addcoords: X = add_coords(X, Y)
 
     if return_paths:
         return X, Y, [path.split('/')[-1] for path in paths]
@@ -52,7 +51,7 @@ def load_dataset(root_dir, var_name='data', return_paths=False, return_idx=False
         return X, Y 
 
 # Source: https://gist.github.com/wassname/7793e2058c5c9dacb5212c0ac0b18a8a
-def add_coords(X_all, Y_all):
+def add_coords(X_all, Y_all, coords_only=False):
     coords = []
     for i in range(X_all.shape[0]):
         X = X_all[i]
@@ -75,9 +74,10 @@ def add_coords(X_all, Y_all):
         yy = np.ones((128, 128, 64)) * y.reshape(1, 128, 1)
         zz = np.ones((128, 128, 64)) * z.reshape(1, 1, 64)
 
-
-
-        coords.append(np.stack([X[:,:,:,0], xx, yy, zz], axis=3))
+        if coords_only:
+            coords.append(np.stack([xx, yy, zz], axis=3))
+        else:
+            coords.append(np.stack([X[:,:,:,0], xx, yy, zz], axis=3))
     return np.stack(coords)
 
 def get_center(y):
