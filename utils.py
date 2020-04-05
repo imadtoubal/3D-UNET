@@ -53,6 +53,7 @@ def load_dataset(root_dir, var_name='data', return_paths=False, return_idx=False
 # Source: https://gist.github.com/wassname/7793e2058c5c9dacb5212c0ac0b18a8a
 def add_coords(X_all, Y_all, coords_only=False):
     coords = []
+    dims = X_all.shape[1:-1]
     for i in range(X_all.shape[0]):
         X = X_all[i]
         Y = Y_all[i]
@@ -70,9 +71,9 @@ def add_coords(X_all, Y_all, coords_only=False):
         y = (np.arange(X.shape[1]) - center[1]) / (center[1] - left)
         z = (np.arange(X.shape[2]) - center[2]) / (center[2] - top)
 
-        xx = np.ones((128, 128, 64)) * x.reshape(128, 1, 1)
-        yy = np.ones((128, 128, 64)) * y.reshape(1, 128, 1)
-        zz = np.ones((128, 128, 64)) * z.reshape(1, 1, 64)
+        xx = np.ones((dims[0], dims[1], dims[2])) * x.reshape(dims[0], 1, 1)
+        yy = np.ones((dims[0], dims[1], dims[2])) * y.reshape(1, dims[1], 1)
+        zz = np.ones((dims[0], dims[1], dims[2])) * z.reshape(1, 1, dims[2])
 
         if coords_only:
             coords.append(np.stack([xx, yy, zz], axis=3))

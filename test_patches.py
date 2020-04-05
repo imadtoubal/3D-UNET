@@ -4,51 +4,52 @@ from numpy.random import seed
 from tensorflow import set_random_seed
 import tensorflow as tf
 import datetime
+from losses import fl
 
 # Custom imports
-from nets import unet, unet_2d, unet_bi, unetpp, unetpp_2d, scSEunet, scSEunetpp
+from nets import unet, unet_mini, unetpp, unetpp_2d, attunet, scSEunet, scSEunetpp, unet_bi, unet_2d
 from config import get_config
 
-# seed(0)
-# set_random_seed(0)
+#seed(0)
+#set_random_seed(0)
 
 # %% Import configs
 cfg = get_config()
 
 
 # %%
-X,  Y, paths  = load_dataset(cfg['data']['test_path'], return_paths=True, addcoords=True, coords_only=True)
+X,  Y  = np.load('patches/test/x_patches.npy'), np.load('patches/test/y_patches.npy')
 
 # %%
 nets = {
-    'unet': unet,
+    '0.unet': unet_mini,
+    '1.unet': unet,
     #'unet_bi': unet_bi,
-    'unet_2d': unet_2d,
-    'scseunet': scSEunet,
-    'scseunetpp': scSEunetpp,
+    #'3.scseunet': scSEunet,
+    #'2.unet_2d': unet_2d,
+    #'4.unetpp': unetpp,
+    #'5.unetpp_2d': unetpp_2d,
+    #'6.scseunetpp': scSEunetpp,
     # 'attunet': attunet,
-    'unetpp': unetpp,
-    'unetpp_2d': unetpp_2d,
-    # 'scseunet3': scSEunet
+    # 'unetpp_2d': unetpp_2d
 }
 
+# %%
 for net in nets:
-    model = nets[net](128, 128, 64, 3)
+    model = nets[net](64,64,16,10, bn=True)
+    modelname = f'model_{net}_patches.p5'
 
-    modelname = f'model_{net}_coord_only.p5'
-    model.load_weights('ckpt/' + modelname)
+    model.load_weights('ckpt_patches/' + modelname)
 
     # %%
     out = model.predict(X, batch_size=1)
     if type(out) == type([]):
         out = out[-1]
 
-    export_outs(X, Y, out, cfg['data']['out_path'] + modelname +'/', paths=paths)
-
     tabledata = []
 
     for i in range(out.shape[0]):
-        row = [paths[i]]
+        row = [f'{i}']
         for j in range(1, 6):
             yt = Y[i,:,:,:,j]
             yp = out[i,:,:,:,j]
@@ -62,4 +63,4 @@ for net in nets:
 
     print(df)
 
-    df.to_csv('results/{}'.format(f'{modelname}.csv'))
+    df.to_csv('results/{}'.format(f'{modelname}_patches.csv'))
